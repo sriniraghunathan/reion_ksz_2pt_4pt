@@ -1,2 +1,2 @@
-# reion_ksz_2pt_4pt
+# Reionisation kSZ: Compare non-Gaussianity from different kSZ simulations
 Analyse kSZ non-Gaussianity across different kSZ sims
