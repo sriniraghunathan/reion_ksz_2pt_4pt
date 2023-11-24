@@ -335,24 +335,6 @@ def radial_profile(image, binsize, maxbin, minbin=0.0, xy=None, return_errors=Fa
 
 ################################################################################################################
 
-def get_Kbar(els, cl_signal, wl):
-
-    def fn_for_int_for_simps(el, cl_signal):
-        t1 = el * special.jn(bessel_order, el * theta_val) /2. /np.pi
-        kl = el / (1.+z) / D_L.value
-        print(z, kl); sys.exit()
-        t3 = cambmatterpower.P(z, kl)
-        ##loglog(t3); show(); sys.exit()
-        return t1 * t3
-
-    integrate.simps( fn_for_int_for_simps(els), x=els )
-
-
-
-    return Kbar
-
-################################################################################################################
-
 def get_filter(els, cl_signal = None, cl_noise = None, ksz_dl_power = 3., lmin_for_filter = 3000., lmax_for_filter = 5000., mapparams = None, use_sqroot_signal = False):
     ##if cl_signal is None and cl_noise is None:
     if cl_signal is None:
@@ -381,22 +363,31 @@ def get_filter(els, cl_signal = None, cl_noise = None, ksz_dl_power = 3., lmin_f
 
 ################################################################################################################
 
-def get_kbar_filter(tmpels, tmpwls, elmin = 2500., elmax = 7000., ell_bins = 500):
+def get_kbar(tmpels, tmpwls, tmpcls_signal = None, tmpmap = None, angres_am = 0.5, mask = None, binsize = 50., lmax = 10000., elmin = 2500., elmax = 7000., ell_bins = 500, filter_only = True):
+
+    if not filter_only:
+        assert tmpcls_signal is not None or tmpmap is not None
+        if tmpcls_signal is None:
+            assert tmpmap is not None
+            ny, nx = tmpmap.shape
+            mapparams = [ny, nx, angres_am, angres_am]
+            el_, tmpcls_signal = map2cl(mapparams, tmpmap, binsize = binsize, maxbin = lmax, mask = mask)
+            tmpcls_signal = np.interp(tmpels, el_, tmpcls_signal)
 
     def integrand(ln_ell):
         ell = np.exp(ln_ell)
         wl = np.interp(ell, tmpels, tmpwls)
-        if (0):
-            plot(tmpels, tmpwls, lw = 2.)
-            plot(ell, wl, color = 'orangered')
-            show(); sys.exit()
-        return wl**2
+        if filter_only:
+            return wl**2
+        else:
+            cl = np.interp(ell, tmpels, tmpcls_signal)
+            dl = ell * (ell+1)/2/np.pi
+            return dl * wl**2
 
     ln_ells   = np.linspace(np.log(elmin), np.log(elmax), ell_bins)
-    kbar_filter = integrate.simps( integrand(ln_ells), x = ln_ells )
-    #kbar_filter = integrate.quad(integrand, lmin, lmax)[0]
-    
-    return kbar_filter
+    kbar = integrate.simps( integrand(ln_ells), x = ln_ells )
+    #kbar = integrate.quad(integrand, lmin, lmax)[0]    
+    return kbar
 
 ################################################################################################################
 
