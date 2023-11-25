@@ -1,6 +1,7 @@
 import numpy as np, sys, os, scipy as sc
 import scipy.ndimage as ndimage
 import scipy.integrate as integrate
+from pylab import *
 try:
     import healpy as H
 except:
@@ -374,14 +375,20 @@ def get_kbar(tmpels, tmpwls, tmpcls_signal = None, tmpmap = None, angres_am = 0.
             el_, tmpcls_signal = map2cl(mapparams, tmpmap, binsize = binsize, maxbin = lmax, mask = mask)
             tmpcls_signal = np.interp(tmpels, el_, tmpcls_signal)
 
+
     def integrand(ln_ell):
         ell = np.exp(ln_ell)
         wl = np.interp(ell, tmpels, tmpwls)
+        if (0):
+            plot(tmpels, tmpwls, lw = 2.)
+            plot(ell, wl, color = 'orangered')
+            show(); sys.exit()
         if filter_only:
-            return wl**2
+            return wl#**2
         else:
             cl = np.interp(ell, tmpels, tmpcls_signal)
-            dl = ell * (ell+1)/2/np.pi
+            dl_fac = ell * (ell+1)/2/np.pi
+            dl = dl_fac * cl
             return dl * wl**2
 
     ln_ells   = np.linspace(np.log(elmin), np.log(elmax), ell_bins)
