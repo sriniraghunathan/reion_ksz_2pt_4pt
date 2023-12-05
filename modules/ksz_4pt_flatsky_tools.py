@@ -409,7 +409,7 @@ def get_ksz_power_for_filtering(els, ksz_dl_power = 3.):
 
 ################################################################################################################
 
-def get_circular_mask(ny, nx, angres_am = 0.5, circular_mask_deg = 5.):
+def get_mask(ny, nx, angres_am = 0.5, mask_deg = 5., circle_or_square = 'sqaure'):
     npix_cos=60. #int( 10. * 60. / map_resol_arcmins )+2
     ##print(smap.shape); sys.exit()
     boxsize_deg = ny * (angres_am)/60.
@@ -417,7 +417,12 @@ def get_circular_mask(ny, nx, angres_am = 0.5, circular_mask_deg = 5.):
     ra_grid, dec_grid = np.meshgrid(ra_arr, dec_arr)
     radius_grid = np.hypot(ra_grid, dec_grid)
     newmask = np.ones( (ny, nx) )
-    newmask[radius_grid>circular_mask_deg]= 0.
+    if circle_or_square == 'circle':
+        newmask[radius_grid>mask_deg]= 0.
+    elif circle_or_square == 'sqaure':
+        inds = np.where( (abs(ra_grid)>mask_deg) | (abs(dec_grid)>mask_deg) )
+        newmask[inds]= 0.
+    ##imshow( newmask ); colorbar(); show(); sys.exit()
     hanning=np.hanning(npix_cos)
     hanning=np.sqrt(np.outer(hanning,hanning))
     newmask=ndimage.convolve(newmask, hanning)
